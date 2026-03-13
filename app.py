@@ -1,45 +1,96 @@
+# ===============================================
+# DEMO APP
+# Deep Learning–Driven CCTV Surveillance
+# ===============================================
+
 import streamlit as st
-import cv2
-import numpy as np
-from tensorflow.keras.models import load_model
+from PIL import Image
+import random
 
-# ---------------- Load Model ----------------
-model = load_model("crime_detection_model.h5")
-classes = ['NormalVideos','Fighting','Explosion']  # EXACT same as training
+# ---------------------------------
+# PAGE CONFIG
+# ---------------------------------
 
-IMG_SIZE = 64
-SEQUENCE_LENGTH = 30
+st.set_page_config(
+    page_title="CCTV Anomaly Detection Demo",
+    page_icon="🎥",
+    layout="wide"
+)
 
-# ---------------- Streamlit UI ----------------
-st.title("💥 CCTV Surveillance Anomaly Detection")
-st.write("Upload a video (mp4/avi) and get model prediction + description")
+# ---------------------------------
+# TITLE
+# ---------------------------------
 
-uploaded_file = st.file_uploader("Choose a video...", type=["mp4","avi"])
+st.title("🎥 Deep Learning–Driven CCTV Surveillance")
+st.subheader("Anomalous Human Action Detection in Urban Environments")
+
+st.write("Upload a CCTV frame or image to detect suspicious activity.")
+
+# ---------------------------------
+# FILE UPLOAD
+# ---------------------------------
+
+uploaded_file = st.file_uploader(
+    "Upload CCTV Image",
+    type=["jpg","png","jpeg"]
+)
+
+# ---------------------------------
+# DEMO DESCRIPTION FUNCTION
+# ---------------------------------
+
+def generate_description():
+
+    descriptions = [
+        "A person walking normally on the street.",
+        "Two people standing and talking.",
+        "A vehicle passing through the road.",
+        "A person running quickly which may indicate suspicious activity.",
+        "A group of people gathered near a building entrance."
+    ]
+
+    return random.choice(descriptions)
+
+# ---------------------------------
+# DEMO ANOMALY DETECTION
+# ---------------------------------
+
+def detect_anomaly():
+
+    results = ["Normal Activity","Anomalous Activity Detected"]
+    return random.choice(results)
+
+# ---------------------------------
+# SHOW RESULT
+# ---------------------------------
 
 if uploaded_file is not None:
-    # Save uploaded video temporarily
-    with open("temp_video.mp4","wb") as f:
-        f.write(uploaded_file.read())
-    
-    cap = cv2.VideoCapture("temp_video.mp4")
-    frames = []
-    while len(frames) < SEQUENCE_LENGTH:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frame = cv2.resize(frame,(IMG_SIZE,IMG_SIZE))
-        frame = frame / 255.0
-        frames.append(frame)
-    cap.release()
-    
-    if len(frames) == SEQUENCE_LENGTH:
-        input_seq = np.expand_dims(np.array(frames), axis=0)
-        pred = model.predict(input_seq)
-        predicted_class = classes[np.argmax(pred)]
-        st.success(f"Predicted Action: {predicted_class}")
-        
-        # Optional: AI description (requires GPT API key)
-        # description = get_ai_description(predicted_class)
-        # st.write(description)
-    else:
-        st.warning("Video too short, need at least 30 frames")
+
+    image = Image.open(uploaded_file)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.image(image, caption="Uploaded CCTV Frame", use_column_width=True)
+
+    with col2:
+
+        st.subheader("AI Analysis")
+
+        result = detect_anomaly()
+        description = generate_description()
+
+        if result == "Normal Activity":
+            st.success(result)
+        else:
+            st.error(result)
+
+        st.write("**Scene Description:**")
+        st.write(description)
+
+# ---------------------------------
+# FOOTER
+# ---------------------------------
+
+st.markdown("---")
+st.write("Demo Version – Model will be integrated later using UCF-Crime dataset.")
